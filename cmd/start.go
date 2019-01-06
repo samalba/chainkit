@@ -30,6 +30,15 @@ var startCmd = &cobra.Command{
 			ui.Fatal("unable to parse --join flag: %v", err)
 		}
 
+		genesisAdds, err := cmd.Flags().GetStringArray("genesis-add")
+		if err != nil {
+			ui.Fatal("unable to parse --genesis-add: %v", err)
+		}
+
+		if genesisAdds != nil && chainID != "" {
+			ui.Fatal("both options --join and --genesis-add cannot be combined")
+		}
+
 		ctx := context.Background()
 		cfg := &config.Config{
 			RootDir:        rootDir,
@@ -71,7 +80,7 @@ var startCmd = &cobra.Command{
 			if network != nil {
 				genesis = network.Genesis
 			}
-			errCh <- n.Start(ctx, p, genesis)
+			errCh <- n.Start(ctx, p, genesis, genesisAdds)
 		}()
 
 		// Wait for the application to error out or the user to quit.
@@ -96,6 +105,7 @@ var startCmd = &cobra.Command{
 func init() {
 	startCmd.Flags().String("cwd", ".", "specifies the current working directory")
 	startCmd.Flags().String("join", "", "join a network")
+	startCmd.Flags().StringArray("genesis-add", nil, "adds extra accounts to the genesis (for adding validators, funds or both)")
 
 	rootCmd.AddCommand(startCmd)
 }

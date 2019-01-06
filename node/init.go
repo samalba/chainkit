@@ -13,17 +13,21 @@ import (
 	"strings"
 
 	"github.com/blocklayerhq/chainkit/config"
+	"github.com/blocklayerhq/chainkit/cosmosutil"
 	"github.com/blocklayerhq/chainkit/project"
 	"github.com/blocklayerhq/chainkit/ui"
 	"github.com/blocklayerhq/chainkit/util"
 	"github.com/pkg/errors"
 )
 
-func initialize(ctx context.Context, config *config.Config, p *project.Project) error {
+func initialize(ctx context.Context, config *config.Config, p *project.Project, genesisAdds []string) error {
 	_, err := os.Stat(config.GenesisPath())
 
 	// Skip initialization if already initialized.
 	if err == nil {
+		if len(genesisAdds) > 0 {
+			return errors.New("cannot use the option \"--genesis-add\": the chain is already initialized")
+		}
 		return nil
 	}
 
@@ -47,6 +51,12 @@ func initialize(ctx context.Context, config *config.Config, p *project.Project) 
 
 	if err := fixFsPermissions(ctx, config, p); err != nil {
 		return err
+	}
+
+	if genesisAdds != nil {
+		if err := cosmosutil.GenesisAdd(config.GenesisPath(), genesisAdds); err != nil {
+			return errors.Wrap(err, "Cannot amend the genesis file")
+		}
 	}
 
 	if err := ui.Tree(config.StateDir(), []string{"ipfs"}); err != nil {

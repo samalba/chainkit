@@ -45,13 +45,13 @@ func (n *Node) Stop() {
 
 // Start starts the node. It will not return until it finishes
 // starting.
-func (n *Node) Start(ctx context.Context, p *project.Project, genesis []byte) error {
+func (n *Node) Start(ctx context.Context, p *project.Project, genesisContent []byte, genesisAdds []string) error {
 	n.parentCtx, n.cancelCtx = context.WithCancel(ctx)
 
 	n.doneCh = make(chan struct{})
 	defer close(n.doneCh)
 
-	if err := n.init(ctx, p, genesis); err != nil {
+	if err := n.init(ctx, p, genesisContent, genesisAdds); err != nil {
 		return err
 	}
 
@@ -114,14 +114,14 @@ func (n *Node) Start(ctx context.Context, p *project.Project, genesis []byte) er
 }
 
 // init initializes the server if needed and updates the runtime config.
-func (n *Node) init(ctx context.Context, p *project.Project, genesis []byte) error {
+func (n *Node) init(ctx context.Context, p *project.Project, genesisContent []byte, genesisAddAccounts []string) error {
 	moniker, err := os.Hostname()
 	if err != nil {
 		return errors.Wrap(err, "unable to determine hostname")
 	}
 
 	// Initialize if needed.
-	if err := initialize(ctx, n.config, p); err != nil {
+	if err := initialize(ctx, n.config, p, genesisAddAccounts); err != nil {
 		return errors.Wrap(err, "initialization failed")
 	}
 
@@ -140,11 +140,11 @@ func (n *Node) init(ctx context.Context, p *project.Project, genesis []byte) err
 		return err
 	}
 
-	if genesis == nil {
+	if genesisContent == nil {
 		return nil
 	}
 
-	if err := ioutil.WriteFile(n.config.GenesisPath(), genesis, 0644); err != nil {
+	if err := ioutil.WriteFile(n.config.GenesisPath(), genesisContent, 0644); err != nil {
 		return errors.Wrap(err, "unable to overwrite genesis file")
 	}
 

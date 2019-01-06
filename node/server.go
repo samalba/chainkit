@@ -95,7 +95,7 @@ func (s *server) peerInfo(ctx context.Context) (*discovery.PeerInfo, error) {
 	}
 
 	return &discovery.PeerInfo{
-		NodeID:            string(status.NodeInfo.ID),
+		NodeID:            string(status.NodeInfo.ID()),
 		TendermintP2PPort: s.config.Ports.TendermintP2P,
 	}, nil
 }
